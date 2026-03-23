@@ -1,20 +1,22 @@
 const canvas = document.getElementById("canvas");
-let ctx = canvas.getContext("2d");
+const ctx = canvas.getContext("2d");
 
-// Dimensiones de la ventana
 const window_height = window.innerHeight;
 const window_width = window.innerWidth;
 
-// Ajustar canvas
 canvas.height = window_height;
 canvas.width = window_width;
 
 canvas.style.background = "#ff8";
 
+// =======================
+// CLASE CIRCLE
+// =======================
 class Circle {
   constructor(x, y, radius, color, text, speed) {
-    // 🔒 Asegurar que el círculo INICIE dentro del canvas
     this.radius = radius;
+
+    // Asegurar que inicia dentro del canvas
     this.posX = Math.max(radius, Math.min(x, window_width - radius));
     this.posY = Math.max(radius, Math.min(y, window_height - radius));
 
@@ -22,8 +24,8 @@ class Circle {
     this.text = text;
     this.speed = speed;
 
-    this.dx = 1 * this.speed;
-    this.dy = 1 * this.speed;
+    this.dx = (Math.random() * 2 - 1) * this.speed;
+    this.dy = (Math.random() * 2 - 1) * this.speed;
   }
 
   draw(context) {
@@ -32,12 +34,12 @@ class Circle {
     context.strokeStyle = this.color;
     context.textAlign = "center";
     context.textBaseline = "middle";
-    context.font = "20px Arial";
+    context.font = "16px Arial";
 
     context.fillText(this.text, this.posX, this.posY);
 
     context.lineWidth = 2;
-    context.arc(this.posX, this.posY, this.radius, 0, Math.PI * 2, false);
+    context.arc(this.posX, this.posY, this.radius, 0, Math.PI * 2);
     context.stroke();
 
     context.closePath();
@@ -46,61 +48,78 @@ class Circle {
   update(context) {
     this.draw(context);
 
-    // ======================
-    // COLISIONES CORREGIDAS
-    // ======================
-
-    // Derecha
+    // Colisiones con bordes (corregidas)
     if (this.posX + this.radius > window_width) {
-      this.posX = window_width - this.radius; // 🔒 lo regresa dentro
+      this.posX = window_width - this.radius;
       this.dx = -this.dx;
     }
 
-    // Izquierda
     if (this.posX - this.radius < 0) {
-      this.posX = this.radius; // 🔒 lo regresa dentro
+      this.posX = this.radius;
       this.dx = -this.dx;
     }
 
-    // Arriba
-    if (this.posY - this.radius < 0) {
-      this.posY = this.radius;
-      this.dy = -this.dy;
-    }
-
-    // Abajo
     if (this.posY + this.radius > window_height) {
       this.posY = window_height - this.radius;
       this.dy = -this.dy;
     }
 
-    // Movimiento
+    if (this.posY - this.radius < 0) {
+      this.posY = this.radius;
+      this.dy = -this.dy;
+    }
+
     this.posX += this.dx;
     this.posY += this.dy;
   }
 }
 
-// ======================
-// CREACIÓN DE CÍRCULOS
-// ======================
+// =======================
+// ARRAY DE CÍRCULOS
+// =======================
+let circles = [];
 
-let randomX = Math.random() * window_width;
-let randomY = Math.random() * window_height;
-let randomRadius = Math.floor(Math.random() * 100 + 30);
+// =======================
+// GENERAR CÍRCULOS
+// =======================
+function generarCirculos(n) {
+  circles = [];
 
-let miCirculo = new Circle(randomX, randomY, randomRadius, "blue", "Tec1", 5);
-let miCirculo2 = new Circle(randomX, randomY, randomRadius, "red", "Tec2", 2);
+  for (let i = 0; i < n; i++) {
+    let radius = Math.floor(Math.random() * 40 + 20);
 
-// ======================
+    let x = Math.random() * window_width;
+    let y = Math.random() * window_height;
+
+    let speed = Math.random() * 4 + 1;
+
+    let color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+
+    let circle = new Circle(x, y, radius, color, i + 1, speed);
+
+    circles.push(circle);
+  }
+}
+
+// =======================
+// BOTÓN
+// =======================
+document.getElementById("btnGenerar").addEventListener("click", () => {
+  let cantidad = parseInt(document.getElementById("numCircles").value);
+  generarCirculos(cantidad);
+});
+
+// =======================
 // ANIMACIÓN
-// ======================
-let updateCircle = function () {
-  requestAnimationFrame(updateCircle);
-
+// =======================
+function animate() {
+  requestAnimationFrame(animate);
   ctx.clearRect(0, 0, window_width, window_height);
 
-  miCirculo.update(ctx);
-  miCirculo2.update(ctx);
-};
+  circles.forEach(c => c.update(ctx));
+}
 
-updateCircle();
+animate();
+
+// Inicial
+generarCirculos(5);
