@@ -1,125 +1,112 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-const window_height = window.innerHeight;
-const window_width = window.innerWidth;
+let width = 800;
+let height = 500;
 
-canvas.height = window_height;
-canvas.width = window_width;
+canvas.width = width;
+canvas.height = height;
 
-canvas.style.background = "#ff8";
+let circles = [];
 
-// =======================
-// CLASE CIRCLE
-// =======================
+// CLASE CIRCULO
 class Circle {
-  constructor(x, y, radius, color, text, speed) {
+  constructor(x, y, radius, speed) {
     this.radius = radius;
+    this.posX = x;
+    this.posY = y;
 
-    // Asegurar que inicia dentro del canvas
-    this.posX = Math.max(radius, Math.min(x, window_width - radius));
-    this.posY = Math.max(radius, Math.min(y, window_height - radius));
-
-    this.color = color;
-    this.text = text;
-    this.speed = speed;
-
-    this.dx = (Math.random() * 2 - 1) * this.speed;
-    this.dy = (Math.random() * 2 - 1) * this.speed;
+    this.dx = (Math.random() - 0.5) * speed * 2;
+    this.dy = (Math.random() - 0.5) * speed * 2;
   }
 
-  draw(context) {
-    context.beginPath();
+  draw(ctx) {
+    ctx.beginPath();
 
-    context.strokeStyle = this.color;
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.font = "16px Arial";
+    // EFECTO GLASS
+    let gradient = ctx.createRadialGradient(
+      this.posX, this.posY, this.radius * 0.2,
+      this.posX, this.posY, this.radius
+    );
 
-    context.fillText(this.text, this.posX, this.posY);
+    gradient.addColorStop(0, "rgba(255,255,255,0.7)");
+    gradient.addColorStop(1, "rgba(255,255,255,0.05)");
 
-    context.lineWidth = 2;
-    context.arc(this.posX, this.posY, this.radius, 0, Math.PI * 2);
-    context.stroke();
+    ctx.fillStyle = gradient;
+    ctx.arc(this.posX, this.posY, this.radius, 0, Math.PI * 2);
+    ctx.fill();
 
-    context.closePath();
+    ctx.strokeStyle = "rgba(255,255,255,0.4)";
+    ctx.stroke();
+
+    ctx.closePath();
   }
 
-  update(context) {
-    this.draw(context);
-
-    // Colisiones con bordes (corregidas)
-    if (this.posX + this.radius > window_width) {
-      this.posX = window_width - this.radius;
-      this.dx = -this.dx;
-    }
-
-    if (this.posX - this.radius < 0) {
-      this.posX = this.radius;
-      this.dx = -this.dx;
-    }
-
-    if (this.posY + this.radius > window_height) {
-      this.posY = window_height - this.radius;
-      this.dy = -this.dy;
-    }
-
-    if (this.posY - this.radius < 0) {
-      this.posY = this.radius;
-      this.dy = -this.dy;
-    }
-
+  update() {
     this.posX += this.dx;
     this.posY += this.dy;
+
+    // REBOTES CORREGIDOS
+    if (this.posX + this.radius >= width) {
+      this.posX = width - this.radius;
+      this.dx *= -1;
+    }
+
+    if (this.posX - this.radius <= 0) {
+      this.posX = this.radius;
+      this.dx *= -1;
+    }
+
+    if (this.posY + this.radius >= height) {
+      this.posY = height - this.radius;
+      this.dy *= -1;
+    }
+
+    if (this.posY - this.radius <= 0) {
+      this.posY = this.radius;
+      this.dy *= -1;
+    }
+
+    this.draw(ctx);
   }
 }
 
-// =======================
-// ARRAY DE CÍRCULOS
-// =======================
-let circles = [];
-
-// =======================
-// GENERAR CÍRCULOS
-// =======================
+// GENERAR CIRCULOS
 function generarCirculos(n) {
   circles = [];
 
   for (let i = 0; i < n; i++) {
-    let radius = Math.floor(Math.random() * 40 + 20);
+    let radius = Math.random() * 30 + 20;
 
-    let x = Math.random() * window_width;
-    let y = Math.random() * window_height;
+    let x = Math.random() * (width - 2 * radius) + radius;
+    let y = Math.random() * (height - 2 * radius) + radius;
 
-    let speed = Math.random() * 4 + 1;
+    let speed = Math.random() * 3 + 1;
 
-    let color = `hsl(${Math.random() * 360}, 70%, 50%)`;
-
-    let circle = new Circle(x, y, radius, color, i + 1, speed);
-
-    circles.push(circle);
+    circles.push(new Circle(x, y, radius, speed));
   }
 }
 
-// =======================
-// BOTÓN
-// =======================
-document.getElementById("btnGenerar").addEventListener("click", () => {
-  let cantidad = parseInt(document.getElementById("numCircles").value);
-  generarCirculos(cantidad);
-});
-
-// =======================
-// ANIMACIÓN
-// =======================
+// ANIMACION
 function animate() {
   requestAnimationFrame(animate);
-  ctx.clearRect(0, 0, window_width, window_height);
+  ctx.clearRect(0, 0, width, height);
 
-  circles.forEach(c => c.update(ctx));
+  circles.forEach(c => c.update());
 }
 
-animate();
+// BOTON
+document.getElementById("btnAplicar").addEventListener("click", () => {
+  let n = parseInt(document.getElementById("numCirculos").value);
+  width = parseInt(document.getElementById("canvasWidth").value);
+  height = parseInt(document.getElementById("canvasHeight").value);
 
-// Inicial
+  canvas.width = width;
+  canvas.height = height;
+
+  generarCirculos(n);
+});
+
+// INICIO
 generarCirculos(5);
+animate();
